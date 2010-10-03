@@ -2,6 +2,7 @@
  * Copyright (c) 2010 Thaddee Tyl. All rights reserved.
  */
 
+JSON.getweb = {};
 JSON.web = function (obj, id, opts) {
   /* Display json object obj in html structure of id id.
    * If obj is a string, it is the location of a json file.
@@ -12,9 +13,9 @@ JSON.web = function (obj, id, opts) {
    *  <html>
    *   <body id="locat"></body>
    *   <script>
-   *    var getlocat = JSON.web({hello:'world'}, 'locat');
-   *    if( getlocat('?') ) {  // if it has changed...
-   *      alert( getlocat() );
+   *    var locat = JSON.web({hello:'world'}, 'locat');
+   *    if( locat() ) {  // if it has changed...
+   *      alert( JSON.getweb['locat'] );
    *    }
    *   </script>
    *  </html>  */
@@ -23,10 +24,8 @@ JSON.web = function (obj, id, opts) {
   }
 
   /* where is data located? */
-  data = {
-    'hasChanged': false,
-    'json': {}
-  };
+  var hasChanged = false;
+  JSON.getweb[id] = obj;
   
   var flags = {
     'readonly': {
@@ -69,25 +68,38 @@ JSON.web = function (obj, id, opts) {
       }
     },
     'rewrite': {
-      'obj': function(obj) {
+      'obj': function(obj, path) {
+        /* this function uses the path of the current object to alter
+         * the value of its elements. */
+        /* path: string, eg, '["hello"][4][2]'. */
+        /* id: string of container id, eg, 'show'. */
         var html = '';
         html += '<dl>';
         var i;
         for (i in obj) {
-          html += '<dt><span style="border:1px solid black">::::</span>' +
-            '<button>x</button>' +
-            '<input value="' + i + '">:</dt><dd>' + parseObj(obj[i]) + '</dd>';
+          html += '<dt><span style="border:1px solid black">#</span>' +
+            /* remove: 1. Data; 2. Graphics. */
+            '<button onclick="delete JSON.getweb[\'' + id + '\']' +
+            path + '[\''+i+'\']; ' +
+            'this.parentNode.parentNode.removeChild(' +
+                'this.parentNode.nextSibling);' +
+            'this.parentNode.parentNode.removeChild(this.parentNode);' +
+            '">x</button>' +
+            '<input value="' + i + '">:</dt><dd>' +
+            /* the subpath is updated. */
+            parseObj(obj[i], path + '[\''+i+'\']') + '</dd>';
         }
         html += '<dt><button>+</button></dt>';
         html += '</dl>';
         return html;
       },
-      'list': function(obj) {
+      'list': function(obj, path) {
         var html = '';
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
           html += '<li><span style="border:1px solid black">::</span>' +
-            '<button>x</button>' + parseObj(obj[i]) + '</li>';
+            '<button>x</button>' +
+            parseObj(obj[i], path + '['+i+']') + '</li>';
         }
         html += '<li><button>+</button></li>';
         html += '</ul>';
@@ -109,7 +121,7 @@ JSON.web = function (obj, id, opts) {
     }
   };
 
-  function parseObj(obj) {
+  function parseObj(obj, path) {
     /* Parse obj and return an html string. */
     /* first, let's treat the opts. */
     var deal = (opts.rewrite? flags.rewrite: flags.readonly);
@@ -118,10 +130,10 @@ JSON.web = function (obj, id, opts) {
     if (typeof obj === 'object') {
       if (obj.indexOf !== undefined) {
         /* here, obj is a list. */
-        html += deal.list(obj);
+        html += deal.list(obj, path);
       } else {
         /* here, obj is an object. */
-        html += deal.obj(obj);
+        html += deal.obj(obj, path);
       }
     } else if (typeof obj === 'string') {
       /* here, obj is a string. */
@@ -140,25 +152,20 @@ JSON.web = function (obj, id, opts) {
   }
   
   /* display in struct. */
-  var html = parseObj(obj);
+  var html = parseObj(JSON.getweb[id], '');  // the path is empty.
   var struct = document.getElementById(id);
   struct.innerHTML = html;
 
   /* return a function to check changes. */
-  return function (query) {
-    if (query === '?') {
-      if (data.hasChanged) {
-        /* data has changed. */
-        data.hasChanged = false;
-        return true;
-      } else {
-        /* data has not changed. */
-        data.hasChanged = false;
-        return false;
-      }
+  return function () {
+    if (hasChanged) {
+      /* data has changed. */
+      hasChanged = false;
+      return true;
     } else {
-      /* query is not asking whether data has changed. */
-      return data.json;
+      /* data has not changed. */
+      hasChanged = false;
+      return false;
     }
   };
 }
