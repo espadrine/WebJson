@@ -98,7 +98,12 @@ JSON.web = function (obj, id, opts) {
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
           html += '<li><span style="border:1px solid black">::</span>' +
-            '<button>x</button>' +
+            /* remove: 1. Data; 2. Graphics. */
+            '<button onclick="delete JSON.getweb[\'' + id + '\']' +
+            path + '['+i+']; ' +
+            'this.parentNode.parentNode.removeChild(this.parentNode)' +
+            '">x</button>' +
+            /* the subpath is updated. */
             parseObj(obj[i], path + '['+i+']') + '</li>';
         }
         html += '<li><button>+</button></li>';
