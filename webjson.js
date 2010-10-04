@@ -85,7 +85,13 @@ JSON.web = function (obj, id, opts) {
                 'this.parentNode.nextSibling);' +
             'this.parentNode.parentNode.removeChild(this.parentNode);' +
             '">x</button>' +
-            '<input value="' + i + '">:</dt><dd>' +
+            /* modification of a key! 1. Copy key; 2. Remove old key. */
+            '<input value="' + i + '" ' +
+            'oninput="JSON.getweb[\'' + id + '\']' +
+            path + '[this.value] = JSON.getweb[\'' + id + '\']' +
+            path + '[\''+i+'\']; delete JSON.getweb[\'' + id + '\']' +
+            path + '[\''+i+'\']"' +
+            '/>:</dt><dd>' +
             /* the subpath is updated. */
             parseObj(obj[i], path + '[\''+i+'\']') + '</dd>';
         }
@@ -110,14 +116,24 @@ JSON.web = function (obj, id, opts) {
         html += '</ul>';
         return html;
       },
-      'str': function(obj) {
-        return '<input value="' + obj + '"/>';
+      'str': function(obj, path) {
+        return '<input value="' + obj + '" ' +
+          /* change the string. */
+          'oninput="JSON.getweb[\'' + id + '\']' +
+          path + ' = this.value;"/>';
       },
-      'num': function(obj) {
-        return '<input type="number" value="' + obj + '"/>';
+      'num': function(obj, path) {
+        return '<input type="number" value="' + obj + '" ' +
+          /* change a number. */
+          'oninput="JSON.getweb[\'' + id + '\']' +
+          path + ' = parseInt(this.value,10);"/>';
       },
-      'bool': function(obj) {
-        return '<select><option' + (obj?' selected':'') + '>true</option>' +
+      'bool': function(obj, path) {
+        return '<select ' +
+          /* change the value. */
+          'onchange="JSON.getweb[\'' + id + '\']' +
+          path + ' = this.value==\'true\'?true:false;">' +
+          '<option' + (obj?' selected':'') + '>true</option>' +
           '<option' + (!obj?' selected':'') +'>false</option></select>';
       },
       'null':function(obj) {
@@ -142,13 +158,13 @@ JSON.web = function (obj, id, opts) {
       }
     } else if (typeof obj === 'string') {
       /* here, obj is a string. */
-      html += deal.str(obj);
+      html += deal.str(obj, path);
     } else if (typeof obj === 'number') {
       /* here, obj is a number. */
-      html += deal.num(obj);
+      html += deal.num(obj, path);
     } else if (typeof obj === 'boolean') {
       /* here, obj is a boolean. */
-      html += deal.bool(obj);
+      html += deal.bool(obj, path);
     } else if (obj === null) {
       /* here, obj is null. */
       html += deal['null'](obj);
