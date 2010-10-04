@@ -77,7 +77,7 @@ JSON.web = function (obj, id, opts) {
         html += '<dl>';
         var i;
         for (i in obj) {
-          html += '<dt><span style="border:1px solid black">#</span>' +
+          html += '<dt><span style="border:1px solid black">%</span>' +
             /* remove: 1. Data; 2. Graphics. */
             '<button onclick="delete JSON.getweb[\'' + id + '\']' +
             path + '[\''+i+'\']; ' +
