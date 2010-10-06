@@ -28,7 +28,7 @@ JSON.web = function (obj, id, opts) {
   JSON.getweb[id] = obj;
   
   /* display in struct. */
-  var html = JSON._parseObj(id, JSON.getweb[id], '', opts.rewrite);
+  var html = JSON._parseObj(JSON.getweb[id], '', id, opts.rewrite);
   var struct = document.getElementById(id);
   struct.innerHTML = html;
 
@@ -49,12 +49,12 @@ JSON.web = function (obj, id, opts) {
 JSON._parseObj = (function() {
   var flags = {
     'readonly': {
-      'obj': function(obj) {
+      'obj': function(obj, path, id, opt) {
         var html = '';
         html += '<dl>';
         var i;
         for (i in obj) {
-          html += '<dt>' + i + ':<dd>' + JSON._parseObj(id, obj[i]);
+          html += '<dt>' + i + ':<dd>' + JSON._parseObj(obj[i], '', id, opt);
         }
         if (i === undefined) {
           html += '<dd>Empty object here.';
@@ -62,11 +62,11 @@ JSON._parseObj = (function() {
         html += '</dl>';
         return html;
       },
-      'list': function(obj, path, id) {
+      'list': function(obj, path, id, opt) {
         var html = '';
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
-          html += '<li>' + JSON._parseObj(id, obj[i]);
+          html += '<li>' + JSON._parseObj(obj[i], '', id, opt);
         }
         if (i == 0) {
           html += '<li>Empty list here.';
@@ -88,7 +88,7 @@ JSON._parseObj = (function() {
       }
     },
     'rewrite': {
-      'obj': function(obj, path, id) {
+      'obj': function(obj, path, id, opt) {
         /* this function uses the path of the current object to alter
          * the value of its elements. */
         /* path: string, eg, '["hello"][4][2]'. */
@@ -113,7 +113,7 @@ JSON._parseObj = (function() {
             path + '[\''+i+'\']"' +
             '/>:</dt><dd>' +
             /* the subpath is updated. */
-            JSON._parseObj(id, obj[i], path + '[\''+i+'\']') + '</dd>';
+            JSON._parseObj(obj[i], path + '[\''+i+'\']', id, opt) + '</dd>';
         }
         html += '<dt><button onclick="' +
           /* add button. Local vars must be annihilated. */
@@ -161,7 +161,7 @@ JSON._parseObj = (function() {
         html += '</dl>';
         return html;
       },
-      'list': function(obj, path, id) {
+      'list': function(obj, path, id, opt) {
         var html = '';
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
@@ -172,25 +172,25 @@ JSON._parseObj = (function() {
             'this.parentNode.parentNode.removeChild(this.parentNode)' +
             '">x</button>' +
             /* the subpath is updated. */
-            JSON._parseObj(id, obj[i], path + '['+i+']') + '</li>';
+            JSON._parseObj(obj[i], path + '['+i+']', id, opt) + '</li>';
         }
         html += '<li><button>+</button></li>';
         html += '</ul>';
         return html;
       },
-      'str': function(obj, path) {
+      'str': function(obj, path, id) {
         return '<input value="' + obj + '" ' +
           /* change the string. */
           'oninput="JSON.getweb[\'' + id + '\']' +
           path + ' = this.value;"/>';
       },
-      'num': function(obj, path) {
+      'num': function(obj, path, id) {
         return '<input type="number" value="' + obj + '" ' +
           /* change a number. */
           'oninput="JSON.getweb[\'' + id + '\']' +
           path + ' = parseInt(this.value,10);"/>';
       },
-      'bool': function(obj, path) {
+      'bool': function(obj, path, id) {
         return '<select ' +
           /* change the value. */
           'onchange="JSON.getweb[\'' + id + '\']' +
@@ -204,7 +204,7 @@ JSON._parseObj = (function() {
     }
   };
 
-  return function(id, obj, path, opt) {
+  return function(obj, path, id, opt) {
     /* Parse obj and return an html string. */
     /* first, let's treat the opt. */
     var deal = (opt? flags.rewrite: flags.readonly);
@@ -213,20 +213,20 @@ JSON._parseObj = (function() {
     if (typeof obj === 'object') {
       if (obj.indexOf !== undefined) {
         /* here, obj is a list. */
-        html += deal.list(obj, path, id);
+        html += deal.list(obj, path, id, opt);
       } else {
         /* here, obj is an object. */
-        html += deal.obj(obj, path, id);
+        html += deal.obj(obj, path, id, opt);
       }
     } else if (typeof obj === 'string') {
       /* here, obj is a string. */
-      html += deal.str(obj, path);
+      html += deal.str(obj, path, id);
     } else if (typeof obj === 'number') {
       /* here, obj is a number. */
-      html += deal.num(obj, path);
+      html += deal.num(obj, path, id);
     } else if (typeof obj === 'boolean') {
       /* here, obj is a boolean. */
-      html += deal.bool(obj, path);
+      html += deal.bool(obj, path, id);
     } else if (obj === null) {
       /* here, obj is null. */
       html += deal['null'](obj);
