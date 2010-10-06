@@ -28,7 +28,7 @@ JSON.web = function (obj, id, opts) {
   JSON.getweb[id] = obj;
   
   /* display in struct. */
-  var html = JSON._parseObj(JSON.getweb[id], '', opts.rewrite); // see parseObj
+  var html = JSON._parseObj(id, JSON.getweb[id], '', opts.rewrite);
   var struct = document.getElementById(id);
   struct.innerHTML = html;
 
@@ -54,7 +54,7 @@ JSON._parseObj = (function() {
         html += '<dl>';
         var i;
         for (i in obj) {
-          html += '<dt>' + i + ':<dd>' + JSON._parseObj(obj[i]);
+          html += '<dt>' + i + ':<dd>' + JSON._parseObj(id, obj[i]);
         }
         if (i === undefined) {
           html += '<dd>Empty object here.';
@@ -62,11 +62,11 @@ JSON._parseObj = (function() {
         html += '</dl>';
         return html;
       },
-      'list': function(obj) {
+      'list': function(obj, path, id) {
         var html = '';
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
-          html += '<li>' + JSON._parseObj(obj[i]);
+          html += '<li>' + JSON._parseObj(id, obj[i]);
         }
         if (i == 0) {
           html += '<li>Empty list here.';
@@ -88,7 +88,7 @@ JSON._parseObj = (function() {
       }
     },
     'rewrite': {
-      'obj': function(obj, path) {
+      'obj': function(obj, path, id) {
         /* this function uses the path of the current object to alter
          * the value of its elements. */
         /* path: string, eg, '["hello"][4][2]'. */
@@ -113,7 +113,7 @@ JSON._parseObj = (function() {
             path + '[\''+i+'\']"' +
             '/>:</dt><dd>' +
             /* the subpath is updated. */
-            JSON._parseObj(obj[i], path + '[\''+i+'\']') + '</dd>';
+            JSON._parseObj(id, obj[i], path + '[\''+i+'\']') + '</dd>';
         }
         html += '<dt><button onclick="' +
           /* add button. Local vars must be annihilated. */
@@ -130,23 +130,38 @@ JSON._parseObj = (function() {
            '&lt;/select&gt;&lt;/label&gt;' +
            /* careful there! JS use in the event attr of an event attr. */
            '&lt;button onclick=&quot;' +
-             '(function(){
-              'var html;
-              'switch(this.previousSibling.value){' +
-              'case 0: html = \'\';' +
-              '};' +
-              'var d = document.create(\'\')' +
-              'this.parentNode.parentNode.appendChild(d);' +
-             '})();' +
-             'this.parentNode.parentNode.removeChild(this.parentNode);&quot;' +
-            '&gt;Add&lt;/button&gt;\';' +
-            /* add the selector to the dom tree. */
-            'this.parentNode.addChild(d);})();' +
+            '(function(){' +
+             'var o;' +
+             'switch(this.previousSibling.value){' +
+             'case \'0\': o = {};   break;' +
+             'case \'1\': o = [];   break;' +
+             'case \'2\': o = \'\'; break;' +
+             'case \'3\': o = 0;    break;' +
+             'case \'4\': o = false;break;' +
+             'case \'5\': o = null; break;' +
+             '};' +
+             'this.parentNode.parentNode.removeChild(this.parentNode);' +
+             /* add new <dd> <dt> */
+             'this.parentNode.parentNode.parentNode.innerHTML += ' +
+             /* <dd><input oninput="JSON.getweb['id']..."/></dd> */
+             '\'&amp;lt;dd&amp;gt;' +
+             '&amp;lt;input oninput=&amp;quot;JSON.getweb[\'' + id + '\']' +
+             path + '[this.value] = JSON.getweb[\'' + id + '\']' +
+             path + '[\''+i+'\']; delete JSON.getweb[\'' + id + '\']' +
+             path + '[\''+i+'\']&amp;quot;' +
+             '/&amp;gt;&amp;lt;/dd&amp;gt;' +
+             /* <dt> */
+             '&amp;lt;dt&amp;gt;\' + ' +
+             'JSON._parseObj(\''+id+'\',o) + \'&amp;lt;/dt&amp;gt;\';' +
+            '})();&quot;' +
+           '&gt;Add&lt;/button&gt;\';' +
+           /* add the selector to the dom tree. */
+           'this.parentNode.addChild(d);})();' +
           '">+</button></dt>';
         html += '</dl>';
         return html;
       },
-      'list': function(obj, path) {
+      'list': function(obj, path, id) {
         var html = '';
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
@@ -157,7 +172,7 @@ JSON._parseObj = (function() {
             'this.parentNode.parentNode.removeChild(this.parentNode)' +
             '">x</button>' +
             /* the subpath is updated. */
-            JSON._parseObj(obj[i], path + '['+i+']') + '</li>';
+            JSON._parseObj(id, obj[i], path + '['+i+']') + '</li>';
         }
         html += '<li><button>+</button></li>';
         html += '</ul>';
@@ -189,7 +204,7 @@ JSON._parseObj = (function() {
     }
   };
 
-  return function(obj, path, opt) {
+  return function(id, obj, path, opt) {
     /* Parse obj and return an html string. */
     /* first, let's treat the opt. */
     var deal = (opt? flags.rewrite: flags.readonly);
@@ -198,10 +213,10 @@ JSON._parseObj = (function() {
     if (typeof obj === 'object') {
       if (obj.indexOf !== undefined) {
         /* here, obj is a list. */
-        html += deal.list(obj, path);
+        html += deal.list(obj, path, id);
       } else {
         /* here, obj is an object. */
-        html += deal.obj(obj, path);
+        html += deal.obj(obj, path, id);
       }
     } else if (typeof obj === 'string') {
       /* here, obj is a string. */
