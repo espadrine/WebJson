@@ -13,7 +13,7 @@ JSON.web = function (obj, id, opts) {
    *  <html>
    *   <body id="locat"></body>
    *   <script>
-   *    var locat = JSON.web({hello:'world'}, 'locat');
+   *    var locat = JSON.web({hello:'world'}, 'locat', {rewrite:true});
    *    if( locat() ) {  // if it has changed...
    *      alert( JSON.getweb['locat'] );
    *    }
@@ -27,6 +27,26 @@ JSON.web = function (obj, id, opts) {
   var hasChanged = false;
   JSON.getweb[id] = obj;
   
+  /* display in struct. */
+  var html = JSON._parseObj(JSON.getweb[id], '', opts.rewrite); // see parseObj
+  var struct = document.getElementById(id);
+  struct.innerHTML = html;
+
+  /* return a function to check changes. */
+  return function () {
+    if (hasChanged) {
+      /* data has changed. */
+      hasChanged = false;
+      return true;
+    } else {
+      /* data has not changed. */
+      hasChanged = false;
+      return false;
+    }
+  };
+}
+
+JSON._parseObj = (function() {
   var flags = {
     'readonly': {
       'obj': function(obj) {
@@ -34,7 +54,7 @@ JSON.web = function (obj, id, opts) {
         html += '<dl>';
         var i;
         for (i in obj) {
-          html += '<dt>' + i + ':<dd>' + parseObj(obj[i]);
+          html += '<dt>' + i + ':<dd>' + JSON._parseObj(obj[i]);
         }
         if (i === undefined) {
           html += '<dd>Empty object here.';
@@ -46,7 +66,7 @@ JSON.web = function (obj, id, opts) {
         var html = '';
         html += '<ul>';
         for (var i=0; i<obj.length; i++) {
-          html += '<li>' + parseObj(obj[i]);
+          html += '<li>' + JSON._parseObj(obj[i]);
         }
         if (i == 0) {
           html += '<li>Empty list here.';
@@ -93,9 +113,36 @@ JSON.web = function (obj, id, opts) {
             path + '[\''+i+'\']"' +
             '/>:</dt><dd>' +
             /* the subpath is updated. */
-            parseObj(obj[i], path + '[\''+i+'\']') + '</dd>';
+            JSON._parseObj(obj[i], path + '[\''+i+'\']') + '</dd>';
         }
-        html += '<dt><button>+</button></dt>';
+        html += '<dt><button onclick="' +
+          /* add button. Local vars must be annihilated. */
+          '(function(){var d=document.create(\'div\');' +
+          'd.innerHTML = ' +
+          '\'&lt;label&gt;' +
+           'Type:&lt;select&gt;' +
+            '&lt;option value="0" selected&gt;Object&lt;/option&gt;' +
+            '&lt;option value="1"&gt;List&lt;/option&gt;' +
+            '&lt;option value="2"&gt;String&lt;/option&gt;' +
+            '&lt;option value="3"&gt;Number&lt;/option&gt;' +
+            '&lt;option value="4"&gt;Boolean&lt;/option&gt;' +
+            '&lt;option value="5"&gt;Null &lt;/option&gt;' +
+           '&lt;/select&gt;&lt;/label&gt;' +
+           /* careful there! JS use in the event attr of an event attr. */
+           '&lt;button onclick=&quot;' +
+             '(function(){
+              'var html;
+              'switch(this.previousSibling.value){' +
+              'case 0: html = \'\';' +
+              '};' +
+              'var d = document.create(\'\')' +
+              'this.parentNode.parentNode.appendChild(d);' +
+             '})();' +
+             'this.parentNode.parentNode.removeChild(this.parentNode);&quot;' +
+            '&gt;Add&lt;/button&gt;\';' +
+            /* add the selector to the dom tree. */
+            'this.parentNode.addChild(d);})();' +
+          '">+</button></dt>';
         html += '</dl>';
         return html;
       },
@@ -110,7 +157,7 @@ JSON.web = function (obj, id, opts) {
             'this.parentNode.parentNode.removeChild(this.parentNode)' +
             '">x</button>' +
             /* the subpath is updated. */
-            parseObj(obj[i], path + '['+i+']') + '</li>';
+            JSON._parseObj(obj[i], path + '['+i+']') + '</li>';
         }
         html += '<li><button>+</button></li>';
         html += '</ul>';
@@ -142,10 +189,10 @@ JSON.web = function (obj, id, opts) {
     }
   };
 
-  function parseObj(obj, path) {
+  return function(obj, path, opt) {
     /* Parse obj and return an html string. */
-    /* first, let's treat the opts. */
-    var deal = (opts.rewrite? flags.rewrite: flags.readonly);
+    /* first, let's treat the opt. */
+    var deal = (opt? flags.rewrite: flags.readonly);
     /* we put it all in html. */
     var html = '';
     if (typeof obj === 'object') {
@@ -170,23 +217,6 @@ JSON.web = function (obj, id, opts) {
       html += deal['null'](obj);
     }
     return html;
-  }
-  
-  /* display in struct. */
-  var html = parseObj(JSON.getweb[id], '');  // the path is empty.
-  var struct = document.getElementById(id);
-  struct.innerHTML = html;
-
-  /* return a function to check changes. */
-  return function () {
-    if (hasChanged) {
-      /* data has changed. */
-      hasChanged = false;
-      return true;
-    } else {
-      /* data has not changed. */
-      hasChanged = false;
-      return false;
-    }
   };
-}
+})();
+  
