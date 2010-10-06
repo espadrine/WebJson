@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <script src="webjson.js"></script>
+<meta charset=utf-8>
 <title>test html</title>
 <body>
-  <div id=show>
-  </div>
+  <div id=show></div>
   <script>
     JSON.web( {
       'hello': 1,
-      'world': ['fun',1,2,{},{'fun':[1,2]}],
+      'world': ['fun',1,2,{},{'fun':[1,2],'else':null}],
       'fib': [1,2,3,5,8,13,[true,false,5]]
     },
     'show', {rewrite: true});
