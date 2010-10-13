@@ -116,47 +116,8 @@ JSON._parseObj = (function() {
             JSON._parseObj(obj[i], path + '[\''+i+'\']', id, opt) + '</dd>';
         }
         html += '<dt><button onclick="' +
-          /* add button. Local vars must be annihilated. */
-          '(function(){var d=document.create(\'div\');' +
-          'd.innerHTML = ' +
-          '\'&lt;label&gt;' +
-           'Type:&lt;select&gt;' +
-            '&lt;option value="0" selected&gt;Object&lt;/option&gt;' +
-            '&lt;option value="1"&gt;List&lt;/option&gt;' +
-            '&lt;option value="2"&gt;String&lt;/option&gt;' +
-            '&lt;option value="3"&gt;Number&lt;/option&gt;' +
-            '&lt;option value="4"&gt;Boolean&lt;/option&gt;' +
-            '&lt;option value="5"&gt;Null &lt;/option&gt;' +
-           '&lt;/select&gt;&lt;/label&gt;' +
-           /* careful there! JS use in the event attr of an event attr. */
-           '&lt;button onclick=&quot;' +
-            '(function(){' +
-             'var o;' +
-             'switch(this.previousSibling.value){' +
-             'case \'0\': o = {};   break;' +
-             'case \'1\': o = [];   break;' +
-             'case \'2\': o = \'\'; break;' +
-             'case \'3\': o = 0;    break;' +
-             'case \'4\': o = false;break;' +
-             'case \'5\': o = null; break;' +
-             '};' +
-             'this.parentNode.parentNode.removeChild(this.parentNode);' +
-             /* add new <dd> <dt> */
-             'this.parentNode.parentNode.parentNode.innerHTML += ' +
-             /* <dd><input oninput="JSON.getweb['id']..."/></dd> */
-             '\'&amp;lt;dd&amp;gt;' +
-             '&amp;lt;input oninput=&amp;quot;JSON.getweb[\'' + id + '\']' +
-             path + '[this.value] = JSON.getweb[\'' + id + '\']' +
-             path + '[\''+i+'\']; delete JSON.getweb[\'' + id + '\']' +
-             path + '[\''+i+'\']&amp;quot;' +
-             '/&amp;gt;&amp;lt;/dd&amp;gt;' +
-             /* <dt> */
-             '&amp;lt;dt&amp;gt;\' + ' +
-             'JSON._parseObj(\''+id+'\',o) + \'&amp;lt;/dt&amp;gt;\';' +
-            '})();&quot;' +
-           '&gt;Add&lt;/button&gt;\';' +
-           /* add the selector to the dom tree. */
-           'this.parentNode.addChild(d);})();' +
+          /* add button. */
+          'JSON._tools.addBut(this,\'' + path + '\',\'' + id + '\')' +
           '">+</button></dt>';
         html += '</dl>';
         return html;
@@ -234,4 +195,48 @@ JSON._parseObj = (function() {
     return html;
   };
 })();
-  
+
+JSON._tools = {};
+JSON._tools.addBut = function(button, path, id) {
+  /* add button. Local vars must be annihilated. */
+  var d = document.createElement('div');
+  d.innerHTML = '&lt;label&gt;' +
+   'Type:&lt;select&gt;' +
+    '&lt;option value="0" selected&gt;Object&lt;/option&gt;' +
+    '&lt;option value="1"&gt;List&lt;/option&gt;' +
+    '&lt;option value="2"&gt;String&lt;/option&gt;' +
+    '&lt;option value="3"&gt;Number&lt;/option&gt;' +
+    '&lt;option value="4"&gt;Boolean&lt;/option&gt;' +
+    '&lt;option value="5"&gt;Null &lt;/option&gt;' +
+   '&lt;/select&gt;&lt;/label&gt;' +
+   /* careful there! JS use in the event attr of an event attr. */
+   '&lt;button onclick=&quot;' +
+    '(function(){' +
+     'var o;' +
+     'switch(this.previousSibling.value){' +
+     'case \'0\': o = {};   break;' +
+     'case \'1\': o = [];   break;' +
+     'case \'2\': o = \'\'; break;' +
+     'case \'3\': o = 0;    break;' +
+     'case \'4\': o = false;break;' +
+     'case \'5\': o = null; break;' +
+     '};' +
+     'this.parentNode.parentNode.removeChild(this.parentNode);' +
+     /* add new <dd> <dt> */
+     'this.parentNode.parentNode.parentNode.innerHTML += ' +
+     /* <dd><input oninput="JSON.getweb['id']..."/></dd> */
+     '\'&amp;lt;dd&amp;gt;' +
+     '&amp;lt;input oninput=&amp;quot;JSON.getweb[\'' + id + '\']' +
+     path + '[this.value] = JSON.getweb[\'' + id + '\']' +
+     path + '[\'\']; delete JSON.getweb[\'' + id + '\']' +
+     path + '[\'\']&amp;quot;' +
+     '/&amp;gt;&amp;lt;/dd&amp;gt;' +
+     /* <dt> */
+     '&amp;lt;dt&amp;gt;\' + ' +
+     'JSON._parseObj(\''+id+'\',o) + \'&amp;lt;/dt&amp;gt;\';' +
+    '})();&quot;' +
+   '&gt;Add&lt;/button&gt;\';' +
+
+   /* add the selector to the dom tree. */
+   button.parentNode.addChild(d);
+}
