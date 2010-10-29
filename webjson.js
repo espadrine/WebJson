@@ -23,23 +23,23 @@ JSON.web = function (obj, id, opts) {
     obj = JSON.parse(obj, opts.reviver);
   }
 
-  /* where is data located? */
+  /* Where is data located? */
   var hasChanged = false;
   JSON.getweb[id] = obj;
   
-  /* display in struct. */
+  /* Display in struct. */
   var html = JSON._parseObj(JSON.getweb[id], '', id, opts.template);
   var struct = document.getElementById(id);
   struct.innerHTML = html;
 
-  /* return a function to check changes. */
+  /* Return a function to check changes. */
   return function () {
     if (hasChanged) {
-      /* data has changed. */
+      /* Data has changed. */
       hasChanged = false;
       return true;
     } else {
-      /* data has not changed. */
+      /* Data has not changed. */
       hasChanged = false;
       return false;
     }
@@ -48,34 +48,34 @@ JSON.web = function (obj, id, opts) {
 
 JSON._parseObj = function(obj, path, id, template) {
   /* Parse obj and return an html string. */
-  /* first, let's treat the template. */
+  /* First, let's treat the template. */
   var deal;
   if (template === undefined) {
     deal = JSON._plates.readonly;
   } else {
     deal = JSON._plates[template];
   }
-  /* we put it all in html. */
+  /* We put it all in html. */
   var html = '';
   if (typeof obj === 'object') {
     if (obj === null) {
-      /* here, obj is null. */
+      /* Here, obj is null. */
       html += deal['null'](obj);
     } else if (obj.indexOf !== undefined) {
-      /* here, obj is a list. */
+      /* Here, obj is a list. */
       html += deal.list(obj, path, id, template);
     } else {
-      /* here, obj is an object. */
+      /* Here, obj is an object. */
       html += deal.obj(obj, path, id, template);
     }
   } else if (typeof obj === 'string') {
-    /* here, obj is a string. */
+    /* Here, obj is a string. */
     html += deal.str(obj, path, id);
   } else if (typeof obj === 'number') {
-    /* here, obj is a number. */
+    /* Here, obj is a number. */
     html += deal.num(obj, path, id);
   } else if (typeof obj === 'boolean') {
-    /* here, obj is a boolean. */
+    /* Here, obj is a boolean. */
     html += deal.bool(obj, path, id);
   }
   return html;
@@ -124,14 +124,14 @@ JSON._plates.readonly = {
 JSON._plates.rewrite = {
   'objdt': function(path, id, key) {
     return '<dt><span style="border:1px solid black">%</span>' +
-        /* remove: 1. Data; 2. Graphics. */
+        /* Remove: 1. Data; 2. Graphics. */
         '<button onclick="delete JSON.getweb[\'' + id + '\']' +
         path + '[\''+key+'\']; ' +
         'this.parentNode.parentNode.removeChild(' +
             'this.parentNode.nextSibling);' +
         'this.parentNode.parentNode.removeChild(this.parentNode);' +
         '">x</button>' +
-        /* modification of a key! 1. Copy key; 2. Remove old key. */
+        /* Modification of a key! 1. Copy key; 2. Remove old key. */
         /*  TODO
         '<input value="' + key + '" ' +
         'oninput="JSON.getweb[\'' + id + '\']' +
@@ -143,7 +143,7 @@ JSON._plates.rewrite = {
         key + ':</dt>'
   },
   'obj': function(obj, path, id, template) {
-    /* this function uses the path of the current object to alter
+    /* This function uses the path of the current object to alter
      * the value of its elements. */
     /* path: string, eg, '["hello"][4][2]'. */
     /* id: string of container id, eg, 'show'. */
@@ -153,11 +153,11 @@ JSON._plates.rewrite = {
     for (i in obj) {
       html += JSON._plates.rewrite.objdt(path, id, i);
       html += '<dd>' +
-      /* the subpath is updated. */
+      /* The subpath is updated. */
       JSON._parseObj(obj[i], path + '[\''+i+'\']', id, template) + '</dd>';
     }
     html += '<dt><span style="border:1px solid black">%</span>' +
-      /* add value. */
+      /* Value. */
       '<input placeholder="New key">' +
       /* add button. */
       '<button onclick="' +
@@ -172,16 +172,16 @@ JSON._plates.rewrite = {
     html += '<ul>';
     for (var i=0; i<obj.length; i++) {
       html += '<li><span style="border:1px solid black">::</span>' +
-        /* remove: 1. Data; 2. Graphics. */
+        /* Remove: 1. Data; 2. Graphics. */
         '<button onclick="delete JSON.getweb[\'' + id + '\']' +
         path + '['+i+']; ' +
         'this.parentNode.parentNode.removeChild(this.parentNode)' +
         '">x</button>' +
-        /* the subpath is updated. */
+        /* The subpath is updated. */
         JSON._parseObj(obj[i], path + '['+i+']', id, template) + '</li>';
     }
     html += '<li><button ' +
-      /* Add button */
+      /* add button */
       'onclick="JSON._plates.rewrite.addListBut(this,&quot;' +
         path + '&quot;, \'' + id + '\');"' +
       '>+</button></li>';
@@ -190,19 +190,19 @@ JSON._plates.rewrite = {
   },
   'str': function(obj, path, id) {
     return '<input value="' + obj + '" ' +
-      /* change the string. */
+      /* Change the string. */
       'oninput="JSON.getweb[\'' + id + '\']' +
       path + ' = this.value;"/>';
   },
   'num': function(obj, path, id) {
     return '<input type="number" value="' + obj + '" ' +
-      /* change a number. */
+      /* Change a number. */
       'oninput="JSON.getweb[\'' + id + '\']' +
       path + ' = parseInt(this.value,10);"/>';
   },
   'bool': function(obj, path, id) {
     return '<select ' +
-      /* change the value. */
+      /* Change the value. */
       'onchange="JSON.getweb[\'' + id + '\']' +
       path + ' = this.value==\'true\'?true:false;">' +
       '<option' + (obj?' selected':'') + '>true</option>' +
@@ -221,7 +221,7 @@ JSON._plates.rewrite = {
       '<option value="4">Boolean</option>' +
       '<option value="5">Null </option>' +
      '</select></label>' +
-     /* careful there! JS use in the event attr of an event attr. */
+     /* Careful there! JS use in the event attr of an event attr. */
      '<button onclick="(function(that){' +
        'var o;' +
        'switch(that.previousSibling.firstChild.nextSibling.value){' +
@@ -250,11 +250,11 @@ JSON._plates.rewrite = {
          'JSON.getweb[\'' + id + '\']' + path + '[\'' + key + '\'] = o;';
       });
 
-    /* add the selector to the dom tree. */
+    /* Add the selector to the dom tree. */
     button.parentNode.parentNode.insertBefore(dt, button.parentNode);
     button.parentNode.parentNode.insertBefore(dd, button.parentNode);
 
-    /* void the key name input widget. */
+    /* Void the key name input widget. */
     button.previousSibling.value = '';
   },
   'addListBut': function(button, path, id) {
@@ -274,7 +274,7 @@ JSON._plates.rewrite = {
        'JSON.getweb[\'' + id + '\']' + path + '.push(o);';
       });
 
-    /* add the selector to the dom tree. */
+    /* Add the selector to the dom tree. */
     button.parentNode.parentNode.insertBefore(li, button.parentNode);
   }
 };
