@@ -123,7 +123,7 @@ JSON._plates.readonly = {
 };
 JSON._plates.rewrite = {
   'objdt': function(path, id, key) {
-    return '<dt><span style="border:1px solid black">%</span>' +
+    return '<span style="border:1px solid black">%</span>' +
         /* Remove: 1. Data; 2. Graphics. */
         '<button onclick="delete JSON.getweb[\'' + id + '\']' +
         path + '[\''+key+'\']; ' +
@@ -151,7 +151,7 @@ JSON._plates.rewrite = {
     html += '<dl>';
     var i;
     for (i in obj) {
-      html += JSON._plates.rewrite.objdt(path, id, i);
+      html += '<dt>' + JSON._plates.rewrite.objdt(path, id, i);
       html += '<dd>' +
       /* The subpath is updated. */
       JSON._parseObj(obj[i], path + '[\''+i+'\']', id, template) + '</dd>';
@@ -167,23 +167,27 @@ JSON._plates.rewrite = {
     html += '</dl>';
     return html;
   },
+  'listdt': function(path, id, index) {
+    return '<span style="border:1px solid black">::</span>' +
+      /* Remove: 1. Data; 2. Graphics. */
+      '<button onclick="delete JSON.getweb[\'' + id + '\']' +
+      path + '[' + index + ']; ' +
+      'this.parentNode.parentNode.removeChild(this.parentNode)' +
+      '">x</button>';
+      /* The subpath is updated. */
+  },
   'list': function(obj, path, id, template) {
     var html = '';
     html += '<ul>';
     for (var i=0; i<obj.length; i++) {
-      html += '<li><span style="border:1px solid black">::</span>' +
-        /* Remove: 1. Data; 2. Graphics. */
-        '<button onclick="delete JSON.getweb[\'' + id + '\']' +
-        path + '['+i+']; ' +
-        'this.parentNode.parentNode.removeChild(this.parentNode)' +
-        '">x</button>' +
-        /* The subpath is updated. */
-        JSON._parseObj(obj[i], path + '['+i+']', id, template) + '</li>';
+      html += '<li>' + JSON._plates.rewrite.listdt(path, id, i);
+      html += JSON._parseObj(obj[i], path + '['+i+']', id, template) + '</li>';
     }
     html += '<li><button ' +
       /* add button */
       'onclick="JSON._plates.rewrite.addListBut(this,&quot;' +
-        path + '&quot;, \'' + id + '\');"' +
+        path + '&quot;, \'' + id + '\', ' +
+        'JSON.getweb[\'' + id + '\']' + path + '.length);"' +
       '>+</button></li>';
     html += '</ul>';
     return html;
@@ -236,13 +240,16 @@ JSON._plates.rewrite = {
   },
   'addObjBut': function(button, path, id, key) {
     /* add button */
-    var dt = document.createElement('dt');
-    dt.innerHTML = JSON._plates.rewrite.objdt(path, id, key)
     var dd = document.createElement('dd');
     dd.innerHTML = JSON._plates.rewrite.addButAsk(path,id,key,
       function(path,id,key) {
         return '' +
          /* Graphical update */
+         'var dt = document.createElement(&quot;dt&quot;);' +
+         'dt.innerHTML = JSON._plates.rewrite.objdt(&quot;' + path +
+           '&quot;, &quot;' + id +'&quot;, &quot;' + key + '&quot;);' +
+         'that.parentNode.parentNode.parentNode.insertBefore(dt, ' +
+           'that.parentNode.parentNode);' +
          'that.parentNode.parentNode.innerHTML = ' +
            'JSON._parseObj(o,&quot;' + path + '[\'' + key + '\']' + '&quot;,' +
              '\'' + id + '\',\'rewrite\');' +
@@ -251,13 +258,12 @@ JSON._plates.rewrite = {
       });
 
     /* Add the selector to the dom tree. */
-    button.parentNode.parentNode.insertBefore(dt, button.parentNode);
     button.parentNode.parentNode.insertBefore(dd, button.parentNode);
 
     /* Void the key name input widget. */
     button.previousSibling.value = '';
   },
-  'addListBut': function(button, path, id) {
+  'addListBut': function(button, path, id, index) {
     /* add button */
     var li = document.createElement('li');
     li.innerHTML = JSON._plates.rewrite.addButAsk(path, id, undefined,
@@ -265,6 +271,8 @@ JSON._plates.rewrite = {
         return '' +
        /* Graphical update */
        'that.parentNode.parentNode.innerHTML = ' +
+         'JSON._plates.rewrite.listdt(&quot;' + path + '&quot;,' +
+           '&quot;' + id + '&quot;,' + index + ') +' +
          'JSON._parseObj(o,&quot;' + path +
            /* The object being parsed is at index length. */
            '[&quot; + (JSON.getweb[\'' + id + '\']' +
