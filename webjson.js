@@ -295,7 +295,9 @@ JSON._plates.editable = {
       html += key + ' : ' + JSON._parseObj(obj[key], '', id, template) + ',';
       html += '</div>';
     }
-    html += '<div style="margin-left:20px"><input type="button" value="+"></div>';
+    html += '<div style="margin-left:20px">';
+    html += '<input type="button" value="+ key:value">';
+    html += '</div>';
     html += '}';
     return html;
   },
@@ -306,7 +308,9 @@ JSON._plates.editable = {
       html += JSON._parseObj(obj[i], '', id, template) + ',';
       html += '</div>';
     }
-    html += '<div style="margin-left:20px"><input type="button" value="+"></div>';
+    html += '<div style="margin-left:20px">';
+    html += '<input type="button" value="+ item">';
+    html += '</div>';
     html += ']';
     return html;
   },
