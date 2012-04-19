@@ -29,20 +29,12 @@ JSON.web = function (obj, id, opts) {
   
   /* Display in struct. */
   var html = JSON._parseObj(JSON.getweb[id], '', id, opts.template);
-  var struct = document.getElementById(id);
-  struct.innerHTML = html;
+  document.getElementById(id).innerHTML = html;
 
   /* Return a function to check changes. */
   return function () {
-    if (hasChanged) {
-      /* Data has changed. */
-      hasChanged = false;
-      return true;
-    } else {
-      /* Data has not changed. */
-      hasChanged = false;
-      return false;
-    }
+    var bool = hasChanged; hadChanged = false;
+    return bool;
   };
 }
 
