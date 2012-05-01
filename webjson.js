@@ -29,20 +29,12 @@ JSON.web = function (obj, id, opts) {
   
   /* Display in struct. */
   var html = JSON._parseObj(JSON.getweb[id], '', id, opts.template);
-  var struct = document.getElementById(id);
-  struct.innerHTML = html;
+  document.getElementById(id).innerHTML = html;
 
   /* Return a function to check changes. */
   return function () {
-    if (hasChanged) {
-      /* Data has changed. */
-      hasChanged = false;
-      return true;
-    } else {
-      /* Data has not changed. */
-      hasChanged = false;
-      return false;
-    }
+    var bool = hasChanged; hadChanged = false;
+    return bool;
   };
 }
 
@@ -286,4 +278,48 @@ JSON._plates.rewrite = {
     button.parentNode.parentNode.insertBefore(li, button.parentNode);
   }
 };
-
+JSON._plates.editable = {
+  'obj': function(obj, path, id, template) {
+    var html = '{';
+    var key;
+    for (key in obj) {
+      html += '<div style="margin-left:20px">';
+      html += key + ' : ' + JSON._parseObj(obj[key], '', id, template) + ',';
+      html += '</div>';
+    }
+    html += '<div style="margin-left:20px">';
+    html += '<input type="button" value="+ key:value">';
+    html += '</div>';
+    html += '}';
+    return html;
+  },
+  'list': function(obj, path, id, template) {
+    var html = '[';
+    for (var i = 0; i < obj.length; i++) {
+      html += '<div style="margin-left:20px">';
+      html += JSON._parseObj(obj[i], '', id, template) + ',';
+      html += '</div>';
+    }
+    html += '<div style="margin-left:20px">';
+    html += '<input type="button" value="+ item">';
+    html += '</div>';
+    html += ']';
+    return html;
+  },
+  'str': function(obj) {
+    return '<input type="text" value="' + obj + '">';
+  },
+  'num': function(obj) {
+    return '<input type="number" value="' + obj + '">';
+  },
+  'bool': function(obj) {
+    var html = '<select>';
+    html += '<option' + (obj?' selected':'') + '>true</option>';
+    html += '<option' + (obj?'':' selected') + '>false</option>';
+    html += '</select>';
+    return html;
+  },
+  'null':function(obj) {
+    return 'null';
+  }
+};
